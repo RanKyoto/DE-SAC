@@ -1,7 +1,7 @@
 *__pycache__
-pp*
 *.DS_Store
 *.zip
-*data
-*tensorboard/
+!de_sac_KDE.zip
+!de_sac_MAF.zip
+*tensorboard
 *plot

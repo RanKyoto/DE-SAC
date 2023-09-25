@@ -90,9 +90,11 @@ class LinearGaussianActor(BasePolicy):
         self.K_net = nn.Linear(last_layer_dim,action_dim)
               
         self.sensor = LinearGaussianSensor(C = ENV_C, G= ENV_G)
-        self.kde = KernelDensityEstimation1D()
-        self.maf = LinearGaussainMAF()
-        self.maf.load()
+        if DENSITY_ESTIMATION == "KDE":
+            self.kde = KernelDensityEstimation1D()
+        elif DENSITY_ESTIMATION == "KDE":
+            self.maf = LinearGaussainMAF()
+            self.maf.load()
 
         if squash_output:
             self.action_dist = SquashedDiagGaussianDistribution(action_dim)
@@ -145,11 +147,6 @@ class LinearGaussianActor(BasePolicy):
             labels = th.hstack((obs,self.K.repeat(len(obs),1)))  
             log_pdf = self.maf.model.log_prob(mean_actions,labels)
             return mean_actions,log_pdf
-        elif DENSITY_ESTIMATION == "TEST":
-            with th.no_grad():
-                y = self.sensor(obs).squeeze(dim=1) #sim dim is not needed
-            mean_actions = th.tanh(self.K @ y)
-            return mean_actions, th.zeros((len(obs),),device=self.device)
 
     def _predict(self, observation: th.Tensor, deterministic: bool = False) -> th.Tensor:
         return self(observation, deterministic)
@@ -203,7 +200,11 @@ class LinearSAC():
         
 # testing code
 if __name__ == '__main__':   
-    DENSITY_ESTIMATION = "TEST"
-    sac = LinearSAC('',total_timesteps=20000)
-    #sac.mean_reward()
+    DENSITY_ESTIMATION = "KDE"
+    sac = LinearSAC(total_timesteps=20000)
 
+    #maf = LinearGaussainMAF()
+    #maf.learn()
+    #maf.save()
+    #DENSITY_ESTIMATION = "MAF"
+    #sac = LinearSAC(total_timesteps=20000)

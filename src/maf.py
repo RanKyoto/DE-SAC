@@ -436,10 +436,6 @@ class LinearGaussainMAF():
 
     def __init__(self) -> None:
         self.args = self.MAF_arg()
-        self.history_labels = torch.tensor([[[0.5,0.5,-0.2],[0.5,0.5,-0.1],[0.5,0.5,0.2],[0.5,0.5,0.3]],
-                        [[0.,0.,1.0],[1.,1.,0.1],[1.,1.,0.15],[1.,1.,0.17]],
-                        [[-0.4,0.4,0.02],[-0.4,0.4,0.04],[-0.4,0.4,0.06],[-0.4,0.4,0.08]]],
-                        device=self.args.device)
         self.current_label = None
         self.dataset = None
 
@@ -482,45 +478,6 @@ class LinearGaussainMAF():
                 if i % self.args.log_interval == 0:
                     print('epoch {:3d} / {}, step {:4d} / {}; loss {:.4f}'.format(
                         epoch, self.args.start_epoch + self.args.n_epochs, i, len(self.dataset), loss.item()))
-            ii = int(epoch % 12 / 4)
-            jj = epoch % 12 % 4
-            self.history_labels[ii,jj] = self.current_label
-            self.plots_density(0,ii,jj)
-
-    def plots_density(self,step=None,ii=0,jj=0 ,n =400):
-        self.model.eval()
-        fig, axs = plt.subplots(3, 4, figsize=(16,9))
-
-        
-        C = torch.tensor([[-2., 1.]],device=self.args.device)
-        u = torch.linspace(-1.5, 1.5, n,device=self.args.device).unsqueeze(1)
-
-
-        for i,row in enumerate(axs):
-            for j,col in enumerate(row):
-                # plot density  
-                # run uniform grid through model and plot
-                label = self.history_labels[i,j].repeat(n,1)
-                x,K_theta = self.history_labels[i,j].chunk(2)
-                mu = (K_theta * C).inner(x)
-                sigma = K_theta ** 2 # G=1
-                
-                true_den =   (-(u.arctanh()-mu)**2/(2*sigma)).exp()\
-                    /(2*torch.pi*sigma).sqrt()/(1-u**2)
-                true_den = true_den.nan_to_num(0)
-                density = self.model.log_prob(u,label).exp()
-                col.plot(u.tolist(),density.tolist())
-                col.plot(u.tolist(),true_den.tolist(),'--')
-                x1,x2,K=self.history_labels[i,j].tolist()
-                col.set_xlabel("[{:.2f},{:.2f},{:.2f}]".format(x1,x2,K))
-        axs[ii,jj].set_facecolor('#eafff5')
-
-        # format and save
-        #matplotlib.rcParams.update({'xtick.labelsize': 'xx-small', 'ytick.labelsize': 'xx-small'})
-        plt.tight_layout()
-        plt.savefig(os.path.join(self.args.output_dir, 'sample' + (step != None)*'_epoch_{}'.format(step) + '.png'))
-        plt.close()
-
 
 LOG_PDF_MAX = 4
 LOG_PDF_MIN = -20
@@ -538,7 +495,6 @@ class MAF_Model():
     def log_prob(self,x,y):
         log_pdf = self.maf.log_prob(x,y)
         return torch.clip(log_pdf,LOG_PDF_MIN,LOG_PDF_MAX) 
-        return log_pdf
 
     def learn(self,x,y):
         log_pdf = self.log_prob(x,y)
@@ -546,9 +502,8 @@ class MAF_Model():
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
-        if torch.any(torch.isnan(list(self.maf.parameters())[0])).item():
-            print("test")
-        return loss
+
+
 
 
 if __name__ == '__main__':

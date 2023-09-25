@@ -176,6 +176,19 @@ class DE_SAC():
                     action = self.model.actor.actor_net(output).tolist()
                 state,_,_,_,_ = self.env.step(action=action)
 
-if __name__ == '__main__':   
+if __name__ == '__main__':
+    # evaluate
     DENSITY_ESTIMATION = "KDE"
-    agent = DE_SAC(total_timesteps=100000,render_mode='rgb_array')
+    agent = DE_SAC("de_sac_KDE",total_timesteps=100000,render_mode='human')
+    agent.simulation()
+
+    #DENSITY_ESTIMATION = "MAF"
+    #agent = DE_SAC("de_sac_MAF",total_timesteps=100000,render_mode='rgb_array')
+    #agent.simulation()
+
+    # training
+    #DENSITY_ESTIMATION = "KDE"
+    #agent = DE_SAC(total_timesteps=100000,render_mode='rgb_array')
+
+    #DENSITY_ESTIMATION = "MAF"
+    #agent = DE_SAC(total_timesteps=100000,render_mode='rgb_array')
