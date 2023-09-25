@@ -1,9 +1,7 @@
-from inspect import Parameter
+
 import sys
-from turtle import forward
-from linear_sac import LogCallBack
 sys.path.append('./')
-from utils import process_bar
+
 from utils.sensors import ForwardKinematicsGaussianSensor
 import gymnasium as gym
 from gymnasium import spaces
@@ -18,13 +16,11 @@ from torch import nn
 from src.kde import KernelDensityEstimation
 from src.maf import MAF_Model
 
-
 from stable_baselines3.common.type_aliases import  Schedule
 from stable_baselines3.sac.policies import SACPolicy,LOG_STD_MAX,LOG_STD_MIN
 from stable_baselines3 import SAC
-from stable_baselines3.common.policies import BasePolicy,BaseModel
+from stable_baselines3.common.policies import BasePolicy
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor,FlattenExtractor,create_mlp
-from stable_baselines3.common.distributions import DiagGaussianDistribution,SquashedDiagGaussianDistribution
 from stable_baselines3.common.preprocessing import get_action_dim
 from stable_baselines3.common.callbacks import BaseCallback
 
@@ -91,8 +87,6 @@ class DEActor(BasePolicy):
         elif DENSITY_ESTIMATION == "MAF":
             self.maf = MAF_Model(input_dim= action_dim, 
                 label_dim= features_dim) 
-        elif DENSITY_ESTIMATION == "TEST":
-            pass
         else:
             assert False, "DENSITY_ESTIMATION should be KDE or MAF"
 
@@ -100,13 +94,12 @@ class DEActor(BasePolicy):
         return  th.nn.utils.parameters_to_vector(self.get_submodule("actor_net").parameters()).detach().cpu().numpy()
 
     def forward(self, obs: th.Tensor, deterministic: bool = True) -> th.Tensor:
-        if DENSITY_ESTIMATION is not None:
+        if DENSITY_ESTIMATION == "KDE" or DENSITY_ESTIMATION == "MAF":
             with th.no_grad():
                 y = self.sensor(obs).squeeze()
             return self.actor_net(y)
         else:
             assert False, "DENSITY_ESTIMATION should be KDE or MAF"
-
 
     def action_log_prob(self, obs: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
         if DENSITY_ESTIMATION == "KDE":
@@ -127,12 +120,6 @@ class DEActor(BasePolicy):
             log_pdf = self.maf.log_prob(actions,obs)
 
             return actions, log_pdf 
-        elif DENSITY_ESTIMATION == 'TEST':
-            with th.no_grad():
-                y = self.sensor(obs).squeeze(dim=1) #sim dim is not needed
-                 
-            actions = self.actor_net(y)
-            return actions,th.zeros((len(obs),),device=self.device)
         else:
             assert False, "DENSITY_ESTIMATION should be KDE or MAF"
 
@@ -158,7 +145,6 @@ class DE_SAC():
                     loss = self.model.actor.maf.learn(u_data,labels)
                     loss_list.append(loss.item())
                 mean_loss  = np.mean(loss_list)    
-                    #print(np.mean(loss_list))
                 self.model.logger.record("train/MAF_loss", mean_loss)
             return True
 
@@ -190,51 +176,6 @@ class DE_SAC():
                     action = self.model.actor.actor_net(output).tolist()
                 state,_,_,_,_ = self.env.step(action=action)
 
-    def plot(self):
-        n=1
-        y0 = np.array([1.68000004e-01, 3.85686529e-07, 2.43000000e-01])
-        norm_list = []
-        noisy_output_list = []
-        output_list = []
-        input_list = []
-        norm_list1 = []
-        for ep in range(n):
-            state,_ = self.env.reset(options={"random":False,"x0":[0.5,-1,-0.5,0.5,0.5,0]}) 
-            for i in range(1000):
-                with th.no_grad():
-                    output = self.model.actor.sensor(th.tensor(state,device=agent.model.device).unsqueeze(0)).flatten()
-                    #output = th.tensor(self.env.output[0:3],device=agent.model.device,dtype=th.float32)
-                    action = self.model.actor.actor_net(output).tolist()
-                    norm_list1.append(np.linalg.norm(np.array(output.tolist())-self.env.output[0:3]))
-                    norm_list.append(np.linalg.norm(y0-self.env.output[0:3]))
-                    noisy_output_list.append(np.linalg.norm(output.tolist()))
-                    output_list.append(np.linalg.norm(self.env.output[0:3]))
-                    input_list.append(np.linalg.norm(action))
-
-
-                state,_,_,_,_ = self.env.step(action=action)
-
-        import matplotlib.pyplot as plt
-        plt.rc("text",usetex=True)
-        fig,axes = plt.subplots(3,1,sharex="all")
-        axes[0].plot(norm_list,color="blue",label=r"$\Vert g_{\rm FK6}(x_k) -g_{\rm FK6}(\mathbf{0}_6)\Vert_2$")
-        axes[0].plot(norm_list1,color="red",alpha=0.8,linestyle=":",label=r"$\Vert y_k -g_{\rm FK6}(\mathbf{0}_6)\Vert_2$")
-        axes[0].set_ylabel("distance to the target")
-        axes[0].legend(loc = "upper right")
-        axes[1].plot(output_list,color="blue",label=r"$\Vert g_{\rm FK6}(x_k) \Vert_2$")
-        axes[1].plot(noisy_output_list,color="red",alpha=0.8,linestyle=":",label=r"$\Vert y_k \Vert_2$")
-        axes[1].set_ylabel("outputs")
-        axes[1].legend(loc = "upper right")
-        axes[2].plot(input_list,color = "blue", label=r"$\Vert u_k \Vert_2$")
-        axes[2].set_ylabel("inputs")
-        axes[2].legend(loc = "upper right")
-        plt.xlim([-10,1000])
-        plt.xlabel(r"$k$")
-        plt.tight_layout()
-        plt.savefig("./plot/sim3_kde.pdf")
-
-
 if __name__ == '__main__':   
     DENSITY_ESTIMATION = "KDE"
-    agent = DE_SAC("de_sac_KDE",total_timesteps=100000,render_mode='rgb_array')
-    agent.plot()
+    agent = DE_SAC(total_timesteps=100000,render_mode='rgb_array')
