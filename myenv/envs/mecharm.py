@@ -30,6 +30,7 @@ class MechArmEnv(gym.Env):
     """
     metadata = {
         "render_modes": ["human", "rgb_array"],
+        'render_fps':30
         }
     def __init__(self, render_mode: Optional[str] = None):
         if render_mode=='human':
@@ -54,8 +55,8 @@ class MechArmEnv(gym.Env):
         self.action_space = self.robot.action_space
 
         #render settings
-        self.render_width= 720,
-        self.render_height = 480,
+        self.render_width= 720
+        self.render_height = 480
         self.render_distance = 0.5
         self.render_yaw = 45
         self.render_pitch = -30
@@ -68,6 +69,16 @@ class MechArmEnv(gym.Env):
                 yaw=self.render_yaw,
                 pitch=self.render_pitch,
             )
+
+        self.sim.create_sphere(
+            body_name="noisy_outputs",
+            radius=0.01,
+            mass=0.0,
+            ghost=True,
+            position=self.robot.get_ee_position(),
+            rgba_color=np.array([0.0, 0.3, 1.0, 0.6]),
+        )
+
         self.sim.create_sphere(
             body_name="target",
             radius=0.02,
@@ -76,6 +87,7 @@ class MechArmEnv(gym.Env):
             position=self.robot.get_ee_position(),
             rgba_color=np.array([0.1, 0.9, 0.1, 0.3]),
         )
+
         self.sim.set_base_pose("target",position=self.robot.get_ee_position(),orientation=[0,-0.71,0,0.71])
 
         self.state = None  # state  x_k
@@ -104,11 +116,13 @@ class MechArmEnv(gym.Env):
         self.sim.step()
         self.state = self._get_obs()
         self.output = self._get_output()
+        noisy_outputs = self.output[0:3] + 0.05*np.random.randn(3)
         # An episode is terminated if the agent has reached the target
         terminated = False
         truncated = False
         info = {}
         reward = self.reward(action)
+        self.sim.set_base_pose("noisy_outputs",position=noisy_outputs,orientation=[0,0,0,1])
         return self.state, reward, terminated, truncated, info
 
     def reset(self, *, seed: Optional[int] = None, options: Optional[dict] = {"random":True, "x0":None}):
@@ -125,6 +139,7 @@ class MechArmEnv(gym.Env):
             self.robot.reset()
         self.state = self._get_obs()
         self.output = self._get_output()
+
         return self.state, {}
 
     def _get_obs(self) -> np.ndarray:
@@ -148,14 +163,15 @@ class MechArmEnv(gym.Env):
         Returns:
             RGB np.ndarray or None: An RGB array if mode is 'rgb_array', else None.
         """
+
         return self.sim.render(
             width=self.render_width,
             height=self.render_height,
-            target_position=self.target_position,
-            distance=self.render_distance,
-            yaw=self.render_yaw,
-            pitch=self.render_pitch,
-            roll=self.render_roll,
+            target_position=np.zeros((3,)),
+            distance=0.5,
+            yaw=45,
+            pitch=-30,
+            roll=0,
         )
 
     def close(self) -> None:

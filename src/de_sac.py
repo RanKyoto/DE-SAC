@@ -168,18 +168,24 @@ class DE_SAC():
 
     def simulation(self):
         n=100
+        
         for ep in range(n):
             state,_ = self.env.reset(options={"random":True}) 
-            for i in range(600):
+            for i in range(300):
+                print(i)
                 with th.no_grad():
                     output = self.model.actor.sensor(th.tensor(state,device=agent.model.device).unsqueeze(0)).flatten()
                     action = self.model.actor.actor_net(output).tolist()
                 state,_,_,_,_ = self.env.step(action=action)
 
+       
+
 if __name__ == '__main__':
     # evaluate
     DENSITY_ESTIMATION = "KDE"
     agent = DE_SAC("de_sac_KDE",total_timesteps=100000,render_mode='human')
+
+    
     agent.simulation()
 
     #DENSITY_ESTIMATION = "MAF"
