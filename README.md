@@ -14,7 +14,7 @@ Advanced Robotics (2023).(pending review).
 |         `LinearEnv-v0`          |                 `MechArmEnv-v0`                 |
 | ![LinearEnv-v0](data/Linear.gif) |         ![MechArmEnv-v0](data/mechArm.gif)         |
 
-In LinearEnv-v0, the blue point depicts the 2-dimensional states, and the red line depicts the 1-dimensional noisy outputs. Our purpose is to control the blue point to the origin.
+In LinearEnv-v0, the blue point depicts the 2-dimensional states, and the length of the red line depicts the 1-dimensional noisy outputs. Our purpose is to control the blue point to the origin.
 
 In MechArmEnv, the green sphere depicts the target position, and the blue sphere depicts the noisy outputs (the end-effector position with measurement noise). Our purpose is to control the end-effector to the target position. Note that the 6-dimensional states are the angles of 6 joints. 
 
