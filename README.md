@@ -6,6 +6,8 @@ Ran Wang, Ye Tian and Kenji Kashima.
 "Density estimation based Soft Actor-Critic: deep reinforcement learning for static output feedback control with measurement noise" 
 Advanced Robotics (2023).(pending review).
 ```
+## Install
+Before implementing our algorithm, we recommend you go through every testing file in the **test** folder to ensure every required Python package has been installed.
 
 ## Simulation Results
 
@@ -16,7 +18,9 @@ Advanced Robotics (2023).(pending review).
 
 In LinearEnv-v0, the blue point depicts the 2-dimensional states, and the length of the red line depicts the 1-dimensional noisy outputs. Our purpose is to control the blue point to the origin.
 
-In MechArmEnv, the green sphere depicts the target position, and the blue sphere depicts the noisy outputs (the end-effector position with measurement noise). Our purpose is to control the end-effector to the target position. Note that the 6-dimensional states are the angles of 6 joints. 
+In MechArmEnv-v0, the green sphere depicts the target position, and the blue sphere depicts the noisy outputs (the end-effector position with measurement noise). Our purpose is to control the end-effector to the target position. Note that the 6-dimensional states are the angles of 6 joints. 
+
+With the learned SOFC policy, we can achieve the control objectives against the measurement noise.
 
 ## Reference
 
