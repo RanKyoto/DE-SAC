@@ -2,9 +2,16 @@
 Contains supplementary simulation code for the work:
 
 ```
-Ran Wang, Ye Tian and Kenji Kashima. 
-"Density estimation based Soft Actor-Critic: deep reinforcement learning for static output feedback control with measurement noise" 
-Advanced Robotics (2023).(pending review).
+@article{wang2024density,
+  title={Density estimation based soft actor-critic: deep reinforcement learning for static output feedback control with measurement noise},
+  author={Wang, Ran and Tian, Ye and Kashima, Kenji},
+  journal={Advanced Robotics},
+  volume={38},
+  number={6},
+  pages={398--409},
+  year={2024},
+  publisher={Taylor \& Francis}
+}
 ```
 ## Install
 Before implementing our algorithm, we recommend you go through every testing file in the **test** folder to ensure every required Python package has been installed.
