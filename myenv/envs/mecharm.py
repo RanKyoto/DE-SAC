@@ -127,7 +127,7 @@ class MechArmEnv(gym.Env):
 
     def reset(self, *, seed: Optional[int] = None, options: Optional[dict] = {"random":True, "x0":None}):
         super().reset(seed=seed)
-        if options['random']: 
+        if options is None or options['random']: 
             self.robot.neutral_joint_values = self.observation_space.sample()*0.5
         else:
             if options['x0'] is None:

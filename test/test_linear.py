@@ -17,7 +17,7 @@ for ep in range(n):
     #env.reset(options={"x0":np.array([7.,7.])})
     env.reset()
     k = 0.03
-    action = np.tanh(k * env.output)*20
+    action = np.tanh(k * env.unwrapped.output)*20
     for i in range(300):
         state, reward, done, _,_ = env.step(action=action)
-        action =  np.tanh(k * env.output)*20
+        action =  np.tanh(k * env.unwrapped.output)*20

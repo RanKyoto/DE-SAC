@@ -6,8 +6,8 @@ from gymnasium import spaces
 import myenv
 
 env = gym.make("Linear-v0",render_mode='rgb_array')
-ENV_C = env.C
-ENV_G = env.G
+ENV_C = env.unwrapped.C
+ENV_G = env.unwrapped.G
 
 # DENSITY_ESTIMATION = {None, "KDE", "MAF"}
 DENSITY_ESTIMATION = "KDE"
@@ -200,7 +200,7 @@ class LinearSAC():
         
 # testing code
 if __name__ == '__main__':   
-    DENSITY_ESTIMATION = "KDE"
+    DENSITY_ESTIMATION = None
     sac = LinearSAC(total_timesteps=20000)
 
     #maf = LinearGaussainMAF()
